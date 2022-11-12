@@ -1,0 +1,14 @@
+
+
+classdef GamePlayer
+    properties
+        value
+        movesMade = [];
+    end
+    methods
+        function[] = AddMove(self, slot)
+            self.movesMade(numel(self.movesMade)+1) = slot;
+        end
+        function[canWin] = CheckForWin(board)
+    end
+end
