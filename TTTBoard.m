@@ -9,10 +9,12 @@ classdef TTTBoard < handle
         filledDiagonals;
         turn;
         mode;
+        first2Move;
     end
     methods
-        function self = TTTBoard(mode)
+        function self = TTTBoard(mode, first2Move)
             self.mode = mode;
+            self.first2Move = first2Move;
             self.board = zeros(3,3);
             self.filledRows = zeros(1,3);
             self.filledColumns = zeros(1,3);

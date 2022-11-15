@@ -4,3 +4,13 @@ for slotNum = 1:9
 end
 
 set(gcbo, 'Enable', 'off');
+
+if strcmp(gameBoard.first2Move, 'computer')
+    if ~strcmp(gameBoard.mode, 'expert')
+        openSlots = FindOpenSlots(gameBoard);
+        slot = openSlots(randi(numel(openSlots)));
+    else
+        %expert
+    end
+    currentPlayer = MakeMove(findobj('tag', ['Slot', num2str(slot)]),gameBoard,slot,currentPlayer,player1,player2);
+end

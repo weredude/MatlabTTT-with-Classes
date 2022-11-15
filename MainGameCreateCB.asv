@@ -1,7 +1,8 @@
 
 rng shuffle
-mode = 'human';
+mode = 'medium';
+first2Move = '
 gameBoard = TTTBoard(mode);
 player1 = GamePlayer(1,'X');
 player2 = GamePlayer(-1, 'O');
-currentPlayer = player1
+currentPlayer = GamePlayer(player1.value, player1.letter);
