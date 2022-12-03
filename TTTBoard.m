@@ -10,19 +10,34 @@ classdef TTTBoard < handle
         turn;
         mode;
         first2Move;
+        wins;
+        losses;
+        ties;
     end
     methods
-        function self = TTTBoard(mode, first2Move)
+        function self = TTTBoard(mode, first2Move, wins, losses, ties)
             self.mode = mode;
             self.first2Move = first2Move;
             self.board = zeros(3,3);
             self.filledRows = zeros(1,3);
             self.filledColumns = zeros(1,3);
             self.filledDiagonals = zeros(1,2);
+            self.wins = wins;
+            self.losses = losses;
+            self.ties = ties;
             self.turn = 0;
         end
-        function self = ClearOpenSpots(self)
+        function self = EndGame(self)
             self.board = ones(3,3);
+        end
+        function self = RecordGame(self, isTie, currentPlayer)
+            if isTie
+                self.ties = self.ties+1;
+            elseif currentPlayer.isPlayer
+                self.wins = self.wins+1;
+            else
+                self.losses = self.losses+1;
+            end
         end
         function self = AddMoveToBoard(self, slot, player)
             if slot <= 3
@@ -87,9 +102,10 @@ classdef TTTBoard < handle
             end
             slot = index2 + 3*(index1-1);
         end
-        function gameOver = CheckGameOver(self)
+        function [gameOver, tie] = CheckGameOver(self)
             win = ismember(3, abs(self.filledRows)) | ismember(3, abs(self.filledColumns)) | ismember(3, abs(self.filledDiagonals));
-            if win || self.turn == 9
+            tie = self.turn == 9 && ~win;
+            if win || tie
                 gameOver = true;
             else
                 gameOver = false;
@@ -97,8 +113,9 @@ classdef TTTBoard < handle
         end
         function slots = FindOpenSlots(self)
             slots = [];
-            for index = 1:numel(self.board)
-                if self.board(index) == 0
+            modBoard = self.board';
+            for index = 1:numel(modBoard)
+                if modBoard(index) == 0
                     slots(numel(slots)+1) = index;
                 end
             end
