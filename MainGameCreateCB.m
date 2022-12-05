@@ -1,8 +1,4 @@
 
-rng shuffle
-mode = 'medium';%'easy' 'medium' 'expert' or 'hVh'
-first2Move = 'human';%'computer' or 'human'
-
 gameBoard = TTTBoard(mode, first2Move, wins, losses, ties);
 
 if strcmp(first2Move, 'human')
@@ -19,3 +15,6 @@ set(findobj('tag', 'winsTextST'), 'string', num2str(wins));
 set(findobj('tag', 'lossesTextST'), 'string', num2str(losses));
 set(findobj('tag', 'tiesTextST'), 'string', num2str(ties));
 set(findobj('tag', 'modeTextST'), 'string', mode);
+set(findobj('tag', 'playerName1ST'), 'string', name1);
+set(findobj('tag', 'playerName2ST'), 'string', name2);
+set(findobj('tag', 'FirstMoveST'), 'string', first2Move);

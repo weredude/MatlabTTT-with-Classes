@@ -4,7 +4,7 @@ function[currentPlayer] = MakeMove(obj, board, slot, currentPlayer, player1, pla
     AddMoveToBoard(board, slot, currentPlayer);
     set(obj, 'string', currentPlayer.letter, 'Enable', 'off');
     
-    [gameOver, isTie] = CheckGameOver(board);
+    [gameOver, isTie] = CheckGameOver(board, currentPlayer.value);
     if gameOver
         OnGameOver(board, isTie, currentPlayer);
     else

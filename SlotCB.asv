@@ -2,36 +2,138 @@
 
 
 slot = get(gcbo, 'userdata');
-AddMoveToBoard(gameBoard, slot, currentPlayer);
-AddMove(currentPlayer, slot);
-gameOver = CheckGameOver(gameBoard);
-set(gcbo, 'string', currentPlayer.letter, 'enable', 'off');
-currentPlayer = SwitchPlayer(currentPlayer, player1, player2);
+currentPlayer = MakeMove(gcbo,gameBoard,slot,currentPlayer,player1,player2);
 
-if gameBoard.mode ~= 'hVh'
-    if gameBoard.mode == 'easy'
-        openSlots = FindOpenSlots(gameBoard);
+%get a list of the open slots on the board
+openSlots = FindOpenSlots(gameBoard, false, false);
+
+if ~strcmp(gameBoard.mode, 'hVh') && numel(openSlots) ~= 0
+
+    if strcmp(gameBoard.mode, 'easy')
+        %pick random move
         slot = openSlots(randi(numel(openSlots)));
-    elseif gameBoard.mode == 'medium'
-        [win, winSlot] = CheckForPosWin(gameBoard, currentPlayer.value);
-        [block, blockSlot] = CheckForPosWin(gameBoard, -currentPlayer.value);
-        if win
-            slot = winSlot;
-        elseif block
-            slot = blockSlot;
+
+    elseif strcmp(gameBoard.mode, 'medium')
+        %loops through each open slot and checks to see if it can produce a win
+        %builds lists that contain all possible win spots and block spots
+        %if none are found, pick a random open spot
+        winningMoves = [];
+        blockingMoves = [];
+        for index = 1:numel(openSlots)
+            [win, ~] = CheckForPosWinOrFork(gameBoard, openSlots(index), currentPlayer.value, 2);
+            [block, ~] = CheckForPosWinOrFork(gameBoard, openSlots(index), -currentPlayer.value, 2);
+            if win
+                winningMoves(numel(winningMoves)+1) = openSlots(index);
+            end
+            if block
+                blockingMoves(numel(blockingMoves)+1) = openSlots(index);
+            end
+        end
+        if numel(winningMoves) ~= 0
+            slot = winningMoves(1);
+        elseif numel(blockingMoves) ~= 0
+            slot = blockingMoves(1);
         else
-            openSlots = FindOpenSlots(gameBoard);
             slot = openSlots(randi(numel(openSlots)));
         end
-    else
-        %expert
+
+    else %expert
+        [isPlayerInCorner, oppositeCorner] = CheckForCorner(gameBoard, -currentPlayer.value);
+        isPlayerInCenter = CheckForCenter(gameBoard);
+        [isPlayerInSide, sideSlot] = CheckForSides(gameBoard);
+
+        winningMoves = [];
+        blockingMoves = [];
+        forkingMoves = [];
+        blockForkMoves = [];
+        for index = 1:numel(openSlots)
+            [win, ~] = CheckForPosWinOrFork(gameBoard, openSlots(index), currentPlayer.value, 2);
+            [block, ~] = CheckForPosWinOrFork(gameBoard, openSlots(index), -currentPlayer.value, 2);
+            [~, fork] = CheckForPosWinOrFork(gameBoard, openSlots(index), currentPlayer.value, 1);
+            [~, blockFork] = CheckForPosWinOrFork(gameBoard, openSlots(index), -currentPlayer.value, 1);
+            if win
+                winningMoves(numel(winningMoves)+1) = openSlots(index);
+            end
+            if block
+                blockingMoves(numel(blockingMoves)+1) = openSlots(index);
+            end
+            if fork
+                forkingMoves(numel(forkingMoves)+1) = openSlots(index);
+            end
+            if blockFork
+                blockForkMoves(numel(blockForkMoves)+1) = openSlots(index);
+            end
+        end
+
+        if numel(winningMoves) ~= 0
+            fprintf('win is possible, winning\n')
+            slot = winningMoves(1);
+        elseif numel(blockingMoves) ~= 0
+            fprintf('block is possible, blocking\n')
+            slot = blockingMoves(1);
+        elseif numel(forkingMoves) ~= 0
+            fprintf('fork possible, forking\n')
+            slot = forkingMoves(1);
+        elseif numel(blockForkMoves) == 1
+            fprintf('must block fork, blocking\n')
+            slot = blockForkMoves(1);
+        elseif numel(blockForkMoves) > 1
+            if numel
+
+            winSetupMoves = [];
+            for index = 1:numel(openSlots)
+                [setupWin, ~] = CheckForPosWinOrFork(gameBoard, openSlots(index), currentPlayer.value, 1);
+                if setupWin
+                    winSetupMoves(numel(winSetupMoves)+1) = openSlots(index);
+                end
+            end
+            for index1 = 1:numel(winSetupMoves)
+                for index2 = 1:numel(openSlots)
+                    if winSetupMoves(index1) ~= openSlots(index2)
+
+                [win, ~] = CheckForPosWinOrFork(gameBoard, winSetupMoves(index), currentPlayer.value, 2);
+            %blockfork evail
+            blockAllForkWinningMoves = [];
+            for index = 1:numel(blockForkMoves)
+                [setupWin, ~] = CheckForPosWinOrFork(gameBoard, blockForkMoves(index), currentPlayer.value, 1);
+                isForkUncovered = CheckForForkUncovered(gameBoard, blockForkMoves(index), -currentPlayer.value);
+                if setupWin && ~isForkUncovered
+                    blockAllForkWinningMoves(numel(blockAllForkWinningMoves)+1) = blockForkMoves(index);
+                end
+            end
+            if numel(blockAllForkWinningMoves) ~= 0
+                fprintf('can block all forks and setup a win\n')
+                slot = blockAllForkWinningMoves(1);
+            else
+                [x,y] = ismember(blockForkMoves, openSlots);
+                remainingOpenSlots = openSlots;
+                remainingOpenSlots(y(x)) = [];
+
+                setupWinMoves = [];
+                for index = 1:numel(remainingOpenSlots)
+                    [setupWin, ~] = CheckForPosWinOrFork(gameBoard, remainingOpenSlots(index), currentPlayer.value, 1);
+                    if setupWin
+                        setupWinMoves(numel(setupWinMoves)+1) = remainingOpenSlots(index);
+                    end
+                end
+                if numel(setupWinMoves) ~= 0
+                    fprintf('can setup a win while blocking forks\n')
+                    slot = setupWinMoves(1);
+                end
+            end
+        elseif ~isPlayerInCenter
+            fprintf('center is open, moving in center\n')
+            slot = 5;
+        elseif isPlayerInCorner
+            fprintf('player is in a corner, moving in opposite corner\n')
+            slot = oppositeCorner;
+        elseif ~isPlayerInCorner
+            fprintf('corners are open, moving in corner\n')
+            slot = 1;
+        elseif ~isPlayerInSide
+            fprintf('sides are open, moving in side\n')
+            slot = sideSlot;
+        end
     end
-    AddMoveToBoard(gameBoard, slot, currentPlayer);
-    AddMove(currentPlayer, slot);
-    gameOver = CheckGameOver(gameBoard);
-    set(findobj('tag', ['Slot', num2str(slot)]), 'string', currentPlayer.letter, 'enable', 'off');
-    currentPlayer = SwitchPlayer(currentPlayer, player1, player2);
+    currentPlayer = MakeMove(findobj('tag', ['Slot', num2str(slot)]),gameBoard,slot,currentPlayer,player1,player2);
 end
-if gameOver
-    for index = 1:9
-        
